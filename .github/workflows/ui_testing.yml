@@ -81,7 +81,6 @@ jobs:
         sudo chmod +x /usr/local/bin/geckodriver
 
 
-
     - name: Run Selenium tests
       env:
         HEADLESS: true
