@@ -54,8 +54,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest
-        pip install selenium
         pip install -r requirements.txt
         
     - name: Install Chrome and ChromeDriver
@@ -81,7 +79,6 @@ jobs:
         tar -xvzf geckodriver-v0.36.0-linux64.tar.gz
         sudo mv geckodriver /usr/local/bin/
         sudo chmod +x /usr/local/bin/geckodriver
-
 
 
     - name: Run Selenium tests
@@ -131,6 +128,7 @@ jobs:
             fi
           done
           
+
       - name: Generate and Deploy Allure Report
         uses: simple-elf/allure-report-action@master
         with:

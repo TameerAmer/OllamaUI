@@ -1,0 +1,39 @@
+services:
+  yolo:
+    image: ${YOLO_VERSION}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgresql
+    environment:
+      DB_BACKEND: postgres
+      # Standard connection vars (adjust names if the Yolo app expects different ones)
+      DB_HOST: postgresql
+      DB_PORT: 5432
+      DB_USER: user
+      DB_PASSWORD: pass
+      DB_NAME: predictions
+      DATABASE_URL: "postgresql://user:pass@postgresql:5432/predictions"
+
+  ollama:
+    image: ${OLLAMA_VERSION}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - yolo
+    environment:
+      YOLO_SERVICE: yolo:8080
+
+
+  postgresql:
+    image: ${POSTGRES_VERSION}
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: predictions
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
