@@ -5,6 +5,7 @@ services:
       - "8080:8080"
     volumes:
       - ./uploads:/app/uploads
+      - ~/.aws:/root/.aws:ro
     depends_on:
       - postgresql
     environment:
@@ -25,6 +26,12 @@ services:
       - yolo
     environment:
       YOLO_SERVICE: yolo:8080
+      S3_BUCKET: tameeramer5tech
+      AWS_REGION: us-west-1
+      AWS_SDK_LOAD_CONFIG: 1
+    volumes:
+      - ./uploads:/app/uploads
+      - ~/.aws:/root/.aws:ro
 
 
   postgresql:
