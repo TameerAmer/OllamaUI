@@ -83,6 +83,15 @@ export async function POST(req: Request) {
       }).promise();
 
       const s3Url = uploadResult.Location;
+
+      // Download the image from S3 to /app/uploads/original/ for YOLO prediction
+      const localPath = `/app/uploads/original/${filename}`;
+      const getObjectResult = await s3.getObject({
+        Bucket: s3Bucket!,
+        Key: s3Key,
+      }).promise();
+      const fs = require('fs');
+      fs.writeFileSync(localPath, getObjectResult.Body);
       // Call the object detection API with just the filename
       const predictionResponse = await fetch(`http://${process.env.YOLO_SERVICE}/predict?img=${encodeURIComponent(filename)}`, {
         method: 'POST',
