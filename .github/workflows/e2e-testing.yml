@@ -55,9 +55,9 @@ jobs:
         script: |
           cd /home/ubuntu/
           # Ensure required directories exist
-          mkdir -p uploads/original
-          mkdir -p uploads/predicted
-          mkdir -p data/db
+          sudo mkdir -p uploads/original
+          sudo mkdir -p uploads/predicted
+          sudo mkdir -p data/db
 
           # Stop and remove old containers
           docker compose down
