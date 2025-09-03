@@ -32,9 +32,9 @@ jobs:
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: $ubuntu
+        username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "docker-compose.yaml"
+        source: "docker-compose.yml"
         target: "/home/ubuntu/"
 
     - name: Deploy to EC2
