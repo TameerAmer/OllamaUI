@@ -52,11 +52,16 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        script: |    
+        script: |
+          # Ensure required directories exist
+          mkdir -p uploads/original
+          mkdir -p uploads/predicted
+          mkdir -p data/db
+
           # Stop and remove old containers
           docker compose down
-          
+
           echo "" >> .env.compose
           echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> .env.compose
-          
+
           docker compose --env-file .env.compose up -d
