@@ -2,8 +2,8 @@ name: Simple Deploy to EC2
 
 on:
   pull_request:
-    branches: [ main ]
-    
+    branches: [ master ]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
