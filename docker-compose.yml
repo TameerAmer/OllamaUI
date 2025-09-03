@@ -1,6 +1,6 @@
 services:
   yolo:
-    image: tameeramer/${YOLO_VERSION}
+    image: tameeramer/${YOLO_VERSION}:${YOLO_IMG_TAG}
     ports:
       - "8080:8080"
     volumes:
