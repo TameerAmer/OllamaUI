@@ -56,8 +56,6 @@ jobs:
           # Stop and remove old containers
           docker compose down
           
-          echo """
-          OLLAMA_UI_IMG_TAG={{ env.IMAGE_TAG }}
-          """ > .env.compose
+          echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> .env.compose
           
           docker compose --env-file .env.compose up -d
