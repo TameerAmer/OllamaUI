@@ -58,6 +58,6 @@ jobs:
           
           echo """
           OLLAMA_UI_IMG_TAG={{ env.IMAGE_TAG }}
-          """ > .env
+          """ > .env.compose
           
-          docker compose up -d
+          docker compose --env-file .env.compose up -d
