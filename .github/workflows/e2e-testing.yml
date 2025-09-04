@@ -86,6 +86,7 @@ jobs:
 
 
   selenium-matrix-tests:
+    needs: deploy
     runs-on: ubuntu-latest
     
     strategy:
@@ -148,7 +149,7 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         SCREEN_WIDTH: ${{ matrix.resolution.width }}
         SCREEN_HEIGHT: ${{ matrix.resolution.height }}
-        # OLLAMA_URL: http://3.254.106.232:3000/
+        OLLAMA_URL: http://${{ secrets.EC2_HOST }}:3000/
         TEST_NAME: ${{ matrix.browser }}-${{ matrix.resolution.name }}
         ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
       run: |
