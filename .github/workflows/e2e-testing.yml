@@ -102,10 +102,14 @@ jobs:
     name: Test ${{ matrix.browser }} - ${{ matrix.resolution.name }}
     
     steps:
-    - name: Load .env.compose for tests
+    - name: Load OllamaUI .env.compose into GitHub Actions environment
       run: |
-        export $(grep -v '^#' OllamaUI/.env.compose | xargs)
-        echo "Environment variables loaded"
+        while IFS= read -r line; do
+          # Skip empty lines or comments
+          [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+          echo "$line" >> $GITHUB_ENV
+        done < OllamaUI/.env.compose
+
     - name: Checkout code
       uses: actions/checkout@v4
       with:
