@@ -152,6 +152,11 @@ jobs:
         OLLAMA_URL: http://${{ secrets.EC2_HOST }}:3000/
         TEST_NAME: ${{ matrix.browser }}-${{ matrix.resolution.name }}
         ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
+        YOLO_VERSION: ${{ env.YOLO_VERSION }}
+        YOLO_IMG_TAG: ${{ env.YOLO_IMG_TAG }}
+        OLLAMA_VERSION: ${{ env.OLLAMA_VERSION }}
+        OLLAMA_UI_IMG_TAG: ${{ env.OLLAMA_UI_IMG_TAG }}
+        POSTGRES_VERSION: ${{ env.POSTGRES_VERSION }}
       run: |
         mkdir -p allure-results
         # Run your tests here with unique result directory
