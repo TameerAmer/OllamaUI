@@ -25,7 +25,13 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    outputs:
+      YOLO_VERSION: ${{ steps.save_env.outputs.YOLO_VERSION }}
+      YOLO_IMG_TAG: ${{ steps.save_env.outputs.YOLO_IMG_TAG }}
+      OLLAMA_VERSION: ${{ steps.save_env.outputs.OLLAMA_VERSION }}
+      OLLAMA_UI_IMG_TAG: ${{ steps.save_env.outputs.IMAGE_TAG }}
+      POSTGRES_VERSION: ${{ steps.save_env.outputs.POSTGRES_VERSION }}
+
     steps:
     - name: Get code
       uses: actions/checkout@v4
@@ -84,21 +90,26 @@ jobs:
           echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> .env.compose
 
           docker compose --env-file .env.compose up -d
-          
-    - name: Save env vars for Selenium tests
+
+    - id: save_env
       run: |
-        echo "YOLO_VERSION=${{ env.YOLO_VERSION }}" >> $GITHUB_ENV
-        echo "YOLO_IMG_TAG=${{ env.YOLO_IMG_TAG }}" >> $GITHUB_ENV
-        echo "OLLAMA_VERSION=${{ env.OLLAMA_VERSION }}" >> $GITHUB_ENV
-        echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
-        echo "POSTGRES_VERSION=${{ env.POSTGRES_VERSION }}" >> $GITHUB_ENV
+        echo "YOLO_VERSION=${{ env.YOLO_VERSION }}" >> $GITHUB_OUTPUT
+        echo "YOLO_IMG_TAG=${{ env.YOLO_IMG_TAG }}" >> $GITHUB_OUTPUT
+        echo "OLLAMA_VERSION=${{ env.OLLAMA_VERSION }}" >> $GITHUB_OUTPUT
+        echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+        echo "POSTGRES_VERSION=${{ env.POSTGRES_VERSION }}" >> $GITHUB_OUTPUT
 
 
 
   selenium-matrix-tests:
     needs: deploy
     runs-on: ubuntu-latest
-    
+    env:
+      YOLO_VERSION: ${{ needs.deploy.outputs.YOLO_VERSION }}
+      YOLO_IMG_TAG: ${{ needs.deploy.outputs.YOLO_IMG_TAG }}
+      OLLAMA_VERSION: ${{ needs.deploy.outputs.OLLAMA_VERSION }}
+      OLLAMA_UI_IMG_TAG: ${{ needs.deploy.outputs.OLLAMA_UI_IMG_TAG }}
+      POSTGRES_VERSION: ${{ needs.deploy.outputs.POSTGRES_VERSION }}
     strategy:
       matrix:
         browser: [chrome, firefox]
