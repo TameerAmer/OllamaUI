@@ -84,6 +84,15 @@ jobs:
           echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> .env.compose
 
           docker compose --env-file .env.compose up -d
+          
+    - name: Save env vars for Selenium tests
+      run: |
+        echo "YOLO_VERSION=${{ env.YOLO_VERSION }}" >> $GITHUB_ENV
+        echo "YOLO_IMG_TAG=${{ env.YOLO_IMG_TAG }}" >> $GITHUB_ENV
+        echo "OLLAMA_VERSION=${{ env.OLLAMA_VERSION }}" >> $GITHUB_ENV
+        echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+        echo "POSTGRES_VERSION=${{ env.POSTGRES_VERSION }}" >> $GITHUB_ENV
+
 
 
   selenium-matrix-tests:
@@ -102,13 +111,6 @@ jobs:
     name: Test ${{ matrix.browser }} - ${{ matrix.resolution.name }}
     
     steps:
-    - name: Load OllamaUI .env.compose into GitHub Actions environment
-      run: |
-        while IFS= read -r line; do
-          # Skip empty lines or comments
-          [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
-          echo "$line" >> $GITHUB_ENV
-        done < OllamaUI/.env.compose
 
     - name: Checkout code
       uses: actions/checkout@v4
