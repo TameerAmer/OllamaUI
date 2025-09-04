@@ -102,6 +102,10 @@ jobs:
     name: Test ${{ matrix.browser }} - ${{ matrix.resolution.name }}
     
     steps:
+    - name: Load .env.compose for tests
+      run: |
+        export $(grep -v '^#' OllamaUI/.env.compose | xargs)
+        echo "Environment variables loaded"
     - name: Checkout code
       uses: actions/checkout@v4
       with:
