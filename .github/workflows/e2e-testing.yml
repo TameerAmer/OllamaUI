@@ -24,11 +24,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     outputs:
-      YOLO_VERSION: ${{ steps.save_env.outputs.YOLO_VERSION }}
-      YOLO_IMG_TAG: ${{ steps.save_env.outputs.YOLO_IMG_TAG }}
-      OLLAMA_VERSION: ${{ steps.save_env.outputs.OLLAMA_VERSION }}
-      OLLAMA_UI_IMG_TAG: ${{ steps.save_env.outputs.OLLAMA_UI_IMG_TAG }}
-      POSTGRES_VERSION: ${{ steps.save_env.outputs.POSTGRES_VERSION }}
+      YOLO_VERSION: ${{ steps.parse_env.outputs.YOLO_VERSION }}
+      YOLO_IMG_TAG: ${{ steps.parse_env.outputs.YOLO_IMG_TAG }}
+      OLLAMA_VERSION: ${{ steps.parse_env.outputs.OLLAMA_VERSION }}
+      OLLAMA_UI_IMG_TAG: ${{ steps.parse_env.outputs.OLLAMA_UI_IMG_TAG }}
+      POSTGRES_VERSION: ${{ steps.parse_env.outputs.POSTGRES_VERSION }}
 
     steps:
     - name: Get code
@@ -75,7 +75,7 @@ jobs:
           docker compose --env-file .env.compose up -d
 
     - id: save_env
-      name: Save deployed environment variables
+      name: Save deployed environment variables (fetch from EC2)
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -83,18 +83,17 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /home/ubuntu/
-          # Extract versions from .env.compose
-          YOLO_VERSION=$(grep '^YOLO_VERSION=' .env.compose | cut -d '=' -f2)
-          YOLO_IMG_TAG=$(grep '^YOLO_IMG_TAG=' .env.compose | cut -d '=' -f2)
-          OLLAMA_VERSION=$(grep '^OLLAMA_VERSION=' .env.compose | cut -d '=' -f2)
-          OLLAMA_UI_IMG_TAG=$(grep '^OLLAMA_UI_IMG_TAG=' .env.compose | cut -d '=' -f2)
-          POSTGRES_VERSION=$(grep '^POSTGRES_VERSION=' .env.compose | cut -d '=' -f2)
+          grep -E '^(YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|OLLAMA_UI_IMG_TAG|POSTGRES_VERSION)=' .env.compose
+      # 👇 capture stdout into GitHub Actions step output
+      register: output
 
-          echo "YOLO_VERSION=$YOLO_VERSION" >> $GITHUB_OUTPUT
-          echo "YOLO_IMG_TAG=$YOLO_IMG_TAG" >> $GITHUB_OUTPUT
-          echo "OLLAMA_VERSION=$OLLAMA_VERSION" >> $GITHUB_OUTPUT
-          echo "OLLAMA_UI_IMG_TAG=$OLLAMA_UI_IMG_TAG" >> $GITHUB_OUTPUT
-          echo "POSTGRES_VERSION=$POSTGRES_VERSION" >> $GITHUB_OUTPUT
+    - id: parse_env
+      name: Parse env values into job outputs
+      run: |
+        echo "${{ steps.save_env.outputs.stdout }}" > env_values.txt
+        while IFS='=' read -r key value; do
+          echo "$key=$value" >> $GITHUB_OUTPUT
+        done < env_values.txt
 
   selenium-matrix-tests:
     needs: deploy
