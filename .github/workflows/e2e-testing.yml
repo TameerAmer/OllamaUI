@@ -73,31 +73,47 @@ jobs:
           echo "" >> .env.compose
           echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> .env.compose
           docker compose --env-file .env.compose up -d
-
-
-    - name: Ensure downloaded directory exists
-      run: mkdir -p downloaded
-
-    - id: fetch_env
-      name: Copy .env.compose back to runner
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "/home/ubuntu/.env.compose"
-        target: "./downloaded/"
-
+          
     - id: parse_env
-      name: Parse env values into job outputs
+      name: Parse env values into job outputs (local .env.compose)
       run: |
-        while IFS='=' read -r key value; do
-          case $key in
-            YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|OLLAMA_UI_IMG_TAG|POSTGRES_VERSION)
-              echo "$key=$value" >> $GITHUB_OUTPUT
-              ;;
-          esac
-        done < downloaded/.env.compose
+        if [ ! -f .env.compose ]; then
+          echo "Error: .env.compose not found in repo root." >&2
+          exit 1
+        fi
+        echo "--- Contents of .env.compose (filtered) ---"
+        grep -E '^(YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|POSTGRES_VERSION)=' .env.compose || true
+
+        # Extract values
+        YOLO_VERSION=$(grep -E '^YOLO_VERSION=' .env.compose | head -n1 | cut -d'=' -f2-)
+        YOLO_IMG_TAG=$(grep -E '^YOLO_IMG_TAG=' .env.compose | head -n1 | cut -d'=' -f2-)
+        OLLAMA_VERSION=$(grep -E '^OLLAMA_VERSION=' .env.compose | head -n1 | cut -d'=' -f2-)
+        POSTGRES_VERSION=$(grep -E '^POSTGRES_VERSION=' .env.compose | head -n1 | cut -d'=' -f2-)
+        # Dynamic value from earlier build step
+        OLLAMA_UI_IMG_TAG="${IMAGE_TAG}"
+
+        for kv in \
+          YOLO_VERSION="$YOLO_VERSION" \
+          YOLO_IMG_TAG="$YOLO_IMG_TAG" \
+          OLLAMA_VERSION="$OLLAMA_VERSION" \
+          OLLAMA_UI_IMG_TAG="$OLLAMA_UI_IMG_TAG" \
+          POSTGRES_VERSION="$POSTGRES_VERSION"; do
+          key=${kv%%=*}; value=${kv#*=};
+          if [ -n "$value" ]; then
+            echo "$key=$value" >> $GITHUB_OUTPUT
+            echo "$key=$value" >> $GITHUB_ENV
+            echo "Exported $key=$value"
+          else
+            echo "Warning: $key empty" >&2
+          fi
+        done
+
+        echo "--- Verification echo ---"
+        echo "YOLO_VERSION=$YOLO_VERSION"
+        echo "YOLO_IMG_TAG=$YOLO_IMG_TAG"
+        echo "OLLAMA_VERSION=$OLLAMA_VERSION"
+        echo "OLLAMA_UI_IMG_TAG=$OLLAMA_UI_IMG_TAG"
+        echo "POSTGRES_VERSION=$POSTGRES_VERSION"
 
 
   selenium-matrix-tests:
@@ -136,6 +152,37 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+
+    - name: Show resolved version environment variables
+      run: |
+        echo "YOLO_VERSION=${YOLO_VERSION}"
+        echo "YOLO_IMG_TAG=${YOLO_IMG_TAG}"
+        echo "OLLAMA_VERSION=${OLLAMA_VERSION}"
+        echo "OLLAMA_UI_IMG_TAG=${OLLAMA_UI_IMG_TAG}"
+        echo "POSTGRES_VERSION=${POSTGRES_VERSION}"
+        echo "Matrix browser=${{ matrix.browser }}"
+        echo "Resolution=${{ matrix.resolution.width }}x${{ matrix.resolution.height }}"
+
+    - name: Pre-create Allure environment.properties
+      run: |
+        mkdir -p allure-results
+        cat > allure-results/environment.properties <<EOF
+        Test.Framework=Selenium+Pytest
+        CI.Platform=GitHub Actions
+        Test.Types=UI Automation
+        Browser=${BROWSER}
+        Resolution=${SCREEN_WIDTH}x${SCREEN_HEIGHT}
+        Environment=${ENVIRONMENT}
+        Target.URL=${OLLAMA_URL}
+        Ollama.Version=${OLLAMA_VERSION}
+        Ollama.Image=${OLLAMA_UI_IMG_TAG}
+        YOLO.Version=${YOLO_VERSION}
+        YOLO.Image=${YOLO_IMG_TAG}
+        Postgres.Version=${POSTGRES_VERSION}
+        Git.Commit=${GITHUB_SHA}
+        Git.Ref=${GITHUB_REF}
+        EOF
+        echo "Created allure-results/environment.properties:"; cat allure-results/environment.properties
 
     - name: Install Chrome and ChromeDriver
       if: matrix.browser == 'chrome'
