@@ -75,14 +75,16 @@ jobs:
           docker compose --env-file .env.compose up -d
 
     - id: fetch_env
-      name: Copy .env.compose back to runner
+      name: Copy .env.compose from EC2 to runner
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: ".env.compose"
-        target: "./downloaded/"
+        source: "/home/ubuntu/.env.compose"
+        target: "downloaded/"
+        strip_components: 1
+
 
     - id: parse_env
       name: Parse env values into job outputs
@@ -94,6 +96,7 @@ jobs:
               ;;
           esac
         done < downloaded/.env.compose
+
 
   selenium-matrix-tests:
     needs: deploy
