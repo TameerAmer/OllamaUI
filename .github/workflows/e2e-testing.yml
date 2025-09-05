@@ -83,17 +83,16 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /home/ubuntu/
-          grep -E '^(YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|OLLAMA_UI_IMG_TAG|POSTGRES_VERSION)=' .env.compose
-      # 👇 capture stdout into GitHub Actions step output
-      register: output
+          grep -E '^(YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|OLLAMA_UI_IMG_TAG|POSTGRES_VERSION)=' .env.compose > env_values.txt
+          cat env_values.txt
+
 
     - id: parse_env
       name: Parse env values into job outputs
       run: |
-        echo "${{ steps.save_env.outputs.stdout }}" > env_values.txt
         while IFS='=' read -r key value; do
           echo "$key=$value" >> $GITHUB_OUTPUT
-        done < env_values.txt
+        done < <(echo "${{ steps.save_env.outputs.stdout }}")
 
   selenium-matrix-tests:
     needs: deploy
