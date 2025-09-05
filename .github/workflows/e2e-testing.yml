@@ -74,25 +74,26 @@ jobs:
           echo "OLLAMA_UI_IMG_TAG=${{ env.IMAGE_TAG }}" >> .env.compose
           docker compose --env-file .env.compose up -d
 
-    - id: save_env
-      name: Save deployed environment variables (fetch from EC2)
-      uses: appleboy/ssh-action@v1.0.3
+    - id: fetch_env
+      name: Copy .env.compose back to runner
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /home/ubuntu/
-          grep -E '^(YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|OLLAMA_UI_IMG_TAG|POSTGRES_VERSION)=' .env.compose > env_values.txt
-          cat env_values.txt
-
+        source: "/home/ubuntu/.env.compose"
+        target: "./downloaded/"
 
     - id: parse_env
       name: Parse env values into job outputs
       run: |
         while IFS='=' read -r key value; do
-          echo "$key=$value" >> $GITHUB_OUTPUT
-        done < <(echo "${{ steps.save_env.outputs.stdout }}")
+          case $key in
+            YOLO_VERSION|YOLO_IMG_TAG|OLLAMA_VERSION|OLLAMA_UI_IMG_TAG|POSTGRES_VERSION)
+              echo "$key=$value" >> $GITHUB_OUTPUT
+              ;;
+          esac
+        done < downloaded/.env.compose
 
   selenium-matrix-tests:
     needs: deploy
