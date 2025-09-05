@@ -1,6 +1,6 @@
 services:
   yolo:
-    image: tameeramer/${YOLO_VERSION}
+    image: tameeramer/${YOLO_VERSION}:${YOLO_IMG_TAG}
     ports:
       - "8080:8080"
     volumes:
@@ -19,7 +19,7 @@ services:
       DATABASE_URL: "postgresql://user:pass@postgresql:5432/predictions"
 
   ollama:
-    image: tameeramer/${OLLAMA_VERSION}
+    image: tameeramer/${OLLAMA_VERSION}:${OLLAMA_UI_IMG_TAG}
     ports:
       - "3000:3000"
     depends_on:
